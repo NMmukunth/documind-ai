@@ -16,23 +16,31 @@ public class ChatService {
     private String groqApiKey;
 
     public String askQuestion(String question) {
-        if (question == null || question.trim().isEmpty()) {
-            return "Please enter a question.";
-        }
         if (!ragService.hasDocumentLoaded()) {
-            return "Please upload a PDF document first before asking questions.";
+            return "Please upload a PDF first.";
         }
 
         String context = ragService.retrieveRelevantContext(question);
 
+        // If keyword search finds nothing, use FULL document text
         if (context == null || context.trim().isEmpty()) {
-            context = ragService.getDocumentSample();
+            context = ragService.getFullDocumentText();
         }
 
-        String prompt = buildQuestionPrompt(question, context);
+        String prompt = """
+            You are a helpful AI assistant analyzing a document.
+            Answer the question based ONLY on the document context below.
+            If the question asks about a table, look for numbers and product names in the context.
+            If you truly cannot find the answer, say "I could not find that in the document."
+            
+            Document context:
+            %s
+            
+            Question: %s
+            """.formatted(context, question);
+
         return callGroqApi(prompt);
     }
-
     public String summarizeDocument() {
         if (!ragService.hasDocumentLoaded()) {
             return "Please upload a PDF document first.";

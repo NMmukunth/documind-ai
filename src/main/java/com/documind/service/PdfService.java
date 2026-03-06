@@ -35,6 +35,9 @@ public class PdfService {
 
             PDFTextStripper stripper = new PDFTextStripper();
             stripper.setSortByPosition(true);
+            stripper.setAddMoreFormatting(true);
+            stripper.setWordSeparator(" ");
+            stripper.setLineSeparator("\n");
             String text = stripper.getText(document);
 
             if (text == null || text.trim().isEmpty()) {

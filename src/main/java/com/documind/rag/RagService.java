@@ -89,6 +89,9 @@ public class RagService {
     public boolean hasDocumentLoaded() {
         return documentLoaded;
     }
+    public String getFullDocumentText() {
+        return fullDocumentText;
+    }
 
     // Simple inner class to hold chunk + score
     private static class ScoredChunk {
