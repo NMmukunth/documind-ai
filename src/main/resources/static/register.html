@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuMind AI — Create Account</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="brand">
+                <div class="brand-logo">🧠</div>
+                <div class="brand-name">DOCUMIND AI</div>
+                <div class="brand-tagline">Create Your Free Account</div>
+            </div>
+            <div class="glass-card">
+                <div id="alert" class="alert"></div>
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="username">Username</label>
+                        <input type="text" id="username" class="form-input"
+                               placeholder="Choose a username (min. 3 chars)"
+                               minlength="3" maxlength="50" required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" class="form-input"
+                               placeholder="Create a password (min. 6 chars)"
+                               minlength="6" required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-input"
+                               placeholder="Repeat your password" required/>
+                    </div>
+                    <button type="submit" id="registerBtn" class="btn-primary">Create Account</button>
+                </form>
+            </div>
+            <div class="auth-footer">
+                Already have an account? <a href="login.html">Sign in →</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('registerBtn');
+
+            if (password !== confirmPassword) { showAlert('Passwords do not match!', 'error'); return; }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showAlert('Account created! Redirecting to login...', 'success');
+                    setTimeout(() => window.location.href = '/login.html', 1500);
+                } else {
+                    showAlert(data.error || 'Registration failed', 'error');
+                }
+            } catch (err) {
+                showAlert('Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        }
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type} show`;
+        }
+    </script>
+</body>
+</html>

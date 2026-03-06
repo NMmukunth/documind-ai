@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuMind AI — Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="brand">
+                <div class="brand-logo">🧠</div>
+                <div class="brand-name">DOCUMIND AI</div>
+                <div class="brand-tagline">Your Intelligent Document Companion</div>
+            </div>
+            <div class="glass-card">
+                <div id="spring-error" class="alert alert-error" style="display:none;">
+                    Invalid username or password. Please try again.
+                </div>
+                <div id="spring-logout" class="alert alert-success" style="display:none;">
+                    You have been logged out successfully.
+                </div>
+                <form id="loginForm" method="POST" action="/api/auth/login">
+                    <div class="form-group">
+                        <label class="form-label" for="username">Username</label>
+                        <input type="text" id="username" name="username" class="form-input"
+                               placeholder="Enter your username" autocomplete="username" required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-input"
+                               placeholder="Enter your password" autocomplete="current-password" required/>
+                    </div>
+                    <button type="submit" class="btn-primary">Sign In to DocuMind</button>
+                </form>
+            </div>
+            <div class="auth-footer">
+                Don't have an account? <a href="register.html">Create one free →</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('error')) document.getElementById('spring-error').style.display = 'block';
+        if (params.get('logout')) document.getElementById('spring-logout').style.display = 'block';
+    </script>
+</body>
+</html>

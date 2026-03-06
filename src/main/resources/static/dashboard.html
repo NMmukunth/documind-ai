@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuMind AI — Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="dashboard">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <div class="nav-logo">🧠</div>
+                <span class="nav-title">DOCUMIND AI</span>
+            </div>
+            <div class="nav-right">
+                <div class="nav-user">Welcome, <span id="navUsername">User</span></div>
+                <button class="btn-logout" onclick="logout()">Sign Out</button>
+            </div>
+        </nav>
+        <main class="dashboard-main">
+            <div class="page-heading">
+                <h1 class="page-title">Document Intelligence Hub</h1>
+                <p class="page-subtitle">Upload a PDF, ask questions, and get AI-powered insights</p>
+            </div>
+            <div class="dash-grid">
+                <!-- Upload Panel -->
+                <div class="glass-card">
+                    <div class="section-title">📄 Upload Document</div>
+                    <div id="docStatus" class="status-badge inactive" style="margin-bottom:1rem;">
+                        <div class="status-dot"></div> No document loaded
+                    </div>
+                    <div class="upload-zone" id="uploadZone"
+                         onclick="document.getElementById('fileInput').click()"
+                         ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event)">
+                        <span class="upload-icon">📁</span>
+                        <div class="upload-text">Drop your PDF here</div>
+                        <div class="upload-subtext">or click to browse files (max 10MB)</div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf" style="display:none"
+                           onchange="uploadPdf(event)"/>
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
+                <!-- Summary Panel -->
+                <div class="glass-card">
+                    <div class="section-title">📋 AI Summary</div>
+                    <div id="summaryBox" class="summary-box">
+                        <span class="summary-placeholder">Upload a PDF and click "Summarize" to get an AI-generated summary...</span>
+                    </div>
+                    <div class="action-row">
+                        <button class="btn-primary" onclick="summarize()" id="summarizeBtn" style="flex:1">
+                            ✨ Summarize PDF
+                        </button>
+                        <button class="btn-secondary" onclick="downloadSummary()" id="downloadBtn" style="display:none">
+                            ⬇ Download PDF
+                        </button>
+                    </div>
+                </div>
+                <!-- Chat Panel -->
+                <div class="glass-card dash-full">
+                    <div class="section-title">💬 Ask Questions About Your Document</div>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message message-ai">
+                                <div class="message-bubble">
+                                    <div class="ai-label">🧠 DocuMind AI</div>
+                                    Hello! I'm DocuMind AI. Upload a PDF document and I'll answer any questions about its contents. Use the 🎤 microphone button to speak your questions!
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-row">
+                            <textarea id="questionInput" class="chat-input"
+                                      placeholder="Ask anything about your document..."
+                                      rows="1"
+                                      onkeydown="handleEnterKey(event)"
+                                      oninput="autoResize(this)"></textarea>
+                            <button class="btn-mic" id="micBtn" onclick="toggleSpeech()" title="Click to speak">🎤</button>
+                            <button class="btn-send" onclick="sendQuestion()">Send →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

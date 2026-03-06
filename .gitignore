@@ -1,0 +1,11 @@
+target/
+*.class
+*.jar
+*.war
+.env
+application-dev.properties
+.settings/
+.classpath
+.project
+*.iml
+.idea/
