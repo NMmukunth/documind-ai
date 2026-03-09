@@ -20,33 +20,82 @@ public class ChatService {
             return "Please upload a PDF first.";
         }
 
-        String context = ragService.retrieveRelevantContext(question);
+        // Step 1 — Try vector search first
+        String context = ragService
+            .retrieveRelevantContext(question);
 
-        // If keyword search finds nothing, use FULL document text
+        System.out.println("Vector search result length: "
+            + (context != null ? context.length() : 0));
+
+        // Step 2 — If nothing found use full document
         if (context == null || context.trim().isEmpty()) {
+            System.out.println(
+                "No vector match — using full document");
             context = ragService.getFullDocumentText();
         }
 
+        // Step 3 — Trim context if too large
+        // Groq has token limits
+        if (context.length() > 6000) {
+            context = context.substring(0, 6000);
+            System.out.println("Context trimmed to 6000 chars");
+        }
+
+        // Step 4 — Build strong prompt
         String prompt = """
-            You are a helpful AI assistant analyzing a document.
-            Answer the question based ONLY on the document context below.
-            If the question asks about a table, look for numbers and product names in the context.
-            If you truly cannot find the answer, say "I could not find that in the document."
+            You are DocuMind AI, a helpful document assistant.
             
-            Document context:
+            IMPORTANT RULES:
+            - Answer ONLY from the document context below
+            - If the context contains [Image on Page X],
+              use that to answer image/chart questions
+            - Give specific numbers and names from the document
+            - If truly not found, say so briefly
+            
+            === DOCUMENT CONTEXT START ===
             %s
+            === DOCUMENT CONTEXT END ===
             
             Question: %s
+            
+            Answer:
             """.formatted(context, question);
+
+        System.out.println("Sending to Groq — prompt length: "
+            + prompt.length());
 
         return callGroqApi(prompt);
     }
+
     public String summarizeDocument() {
         if (!ragService.hasDocumentLoaded()) {
             return "Please upload a PDF document first.";
         }
-        String documentSample = ragService.getDocumentSample();
-        String prompt = buildSummaryPrompt(documentSample);
+
+        // Use full text for summarization
+        String documentText = ragService.getFullDocumentText();
+
+        // Trim if too large
+        if (documentText.length() > 6000) {
+            documentText = documentText.substring(0, 6000);
+        }
+
+        String prompt = """
+            You are DocuMind AI. Create a comprehensive 
+            summary of the following document.
+            
+            Structure your summary with:
+            OVERVIEW: What is this document about?
+            KEY POINTS: Most important points
+            DETAILS: Important data, figures, specifics
+            CONCLUSION: Main takeaway
+            
+            Document:
+            %s
+            
+            Summary:
+            """.formatted(documentText);
+
         return callGroqApi(prompt);
     }
 
@@ -55,51 +104,20 @@ public class ChatService {
             OpenAiChatModel model = OpenAiChatModel.builder()
                 .baseUrl("https://api.groq.com/openai/v1")
                 .apiKey(groqApiKey)
-                .modelName("llama-3.1-8b-instant")
+                .modelName("llama-3.3-70b-versatile")
                 .temperature(0.3)
                 .maxTokens(1000)
                 .build();
 
-            return model.generate(prompt);
+            String response = model.generate(prompt);
+            System.out.println("Groq responded successfully");
+            return response;
+
         } catch (Exception e) {
-            System.err.println("Groq API error: " + e.getMessage());
-            return "I encountered an error while processing your request. " +
-                   "Please check your API key and try again.";
+            System.err.println("Groq API error: " 
+                + e.getMessage());
+            return "Error connecting to AI. " +
+                   "Please check your API key.";
         }
-    }
-
-    private String buildQuestionPrompt(String question, String context) {
-        return """
-            You are DocuMind AI, a helpful document assistant.
-            
-            Answer questions based ONLY on the document context provided below.
-            If the answer is not in the context, say "I could not find that information in the document."
-            Do NOT make up information. Be concise and accurate.
-            
-            === DOCUMENT CONTEXT ===
-            %s
-            === END OF CONTEXT ===
-            
-            User Question: %s
-            
-            Answer:
-            """.formatted(context, question);
-    }
-
-    private String buildSummaryPrompt(String documentText) {
-        return """
-            You are DocuMind AI. Create a comprehensive summary of the following document.
-            
-            Structure your summary with:
-            OVERVIEW: What is this document about? (2-3 sentences)
-            KEY POINTS: The most important points (bullet list)
-            DETAILS: Any important data, figures, or specifics mentioned
-            CONCLUSION: Main takeaway or conclusion
-            
-            Document Content:
-            %s
-            
-            Summary:
-            """.formatted(documentText);
     }
 }

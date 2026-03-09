@@ -2,6 +2,7 @@ package com.documind.service;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,43 +11,68 @@ import java.io.IOException;
 @Service
 public class PdfService {
 
-    public String extractText(MultipartFile file) throws IOException {
+    @Autowired
+    private ImageAnalysisService imageAnalysisService;
+
+    public String extractText(
+            MultipartFile file) throws IOException {
 
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("No file uploaded");
+            throw new IllegalArgumentException(
+                "No file uploaded");
         }
-
-        String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".pdf")) {
-            throw new IllegalArgumentException("Only PDF files are accepted");
+        if (!file.getOriginalFilename()
+                .toLowerCase().endsWith(".pdf")) {
+            throw new IllegalArgumentException(
+                "Only PDF files accepted");
         }
-
         if (file.getSize() > 10 * 1024 * 1024) {
-            throw new IllegalArgumentException("File too large. Maximum is 10MB");
+            throw new IllegalArgumentException(
+                "File too large. Max 10MB");
         }
 
-        // PDFBox 2.x API — uses PDDocument.load(InputStream)
-        try (PDDocument document = PDDocument.load(file.getInputStream())) {
+        try (PDDocument document = 
+                PDDocument.load(file.getInputStream())) {
 
             if (document.isEncrypted()) {
                 throw new IllegalArgumentException(
-                    "Cannot process encrypted/password-protected PDFs");
+                    "Cannot process encrypted PDFs");
             }
 
-            PDFTextStripper stripper = new PDFTextStripper();
+            // Step 1 — Extract normal text
+            PDFTextStripper stripper = 
+                new PDFTextStripper();
             stripper.setSortByPosition(true);
-            stripper.setAddMoreFormatting(true);
-            stripper.setWordSeparator(" ");
-            stripper.setLineSeparator("\n");
             String text = stripper.getText(document);
 
-            if (text == null || text.trim().isEmpty()) {
-                throw new IllegalArgumentException(
-                    "No text found. This PDF may contain only scanned images.");
+            System.out.println("Text extracted: " 
+                + text.length() + " characters");
+
+            // Step 2 — Extract and analyze images
+            System.out.println(
+                "Checking for images in PDF...");
+            String imageText = imageAnalysisService
+                .extractImagesText(document);
+
+            if (!imageText.isEmpty()) {
+                System.out.println(
+                    "Image content found and analyzed!");
+                // Combine text + image descriptions
+                text = text + "\n\n" 
+                    + "=== IMAGE CONTENT ===\n" 
+                    + imageText;
+            } else {
+                System.out.println(
+                    "No significant images found.");
             }
 
-            System.out.println("PDF extracted: " + text.length() +
-                " characters, " + document.getNumberOfPages() + " pages");
+            if (text.trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                    "No content found in PDF");
+            }
+
+            System.out.println("Total content: " 
+                + text.length() + " characters");
             return text;
         }
     }
